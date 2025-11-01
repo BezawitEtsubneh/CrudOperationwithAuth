@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Base URL of your FastAPI backend for albums
-const BASE_URL = "http://127.0.0.1:8002/api/albums";
+const BASE_URL = "http://127.0.0.1:8000/api/albums";
 
 export const albumAPI = {
   // Fetch all albums

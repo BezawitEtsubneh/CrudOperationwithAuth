@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Script to add test data to the database"""
 from database import SessionLocal, engine, Base
-from models import Album, Song
+from models import Album, Song ,Artist
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -12,6 +12,7 @@ try:
     # Clear existing data
     db.query(Song).delete()
     db.query(Album).delete()
+    db.query(Artist).delete()
     db.commit()
     
     # Add test albums
@@ -33,11 +34,19 @@ try:
     ]
     for song in songs:
         db.add(song)
-    
+    artists = [
+    Artist(Artist_name='Queen', Country='UK', audio_file=None),
+    Artist(Artist_name='The Weeknd', Country='Canada', audio_file=None),
+    Artist(Artist_name='Eagles', Country='USA', audio_file=None),
+]
+    for artist in artists:
+        db.add(artist)
+
     db.commit()
     print('✅ Test data added successfully!')
     print(f'   Albums: {len(albums)}')
     print(f'   Songs: {len(songs)}')
+    print(f'   Artists: {len(artists)}')
 except Exception as e:
     db.rollback()
     print(f'❌ Error: {e}')

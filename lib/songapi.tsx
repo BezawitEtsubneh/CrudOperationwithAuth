@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Base URL of your FastAPI backend for songs
-const BASE_URL = "http://127.0.0.1:8002/api/songs";
+const BASE_URL = "http://127.0.0.1:8000/api/songs";
 
 export const songAPI = {
   // Fetch all songs

@@ -15,3 +15,12 @@ class Song(Base):
     Songs_name = Column(String, index=True)
     Gener = Column(String)
     audio_file = Column(String, nullable=True)
+
+class Artist(Base):
+    __tablename__ = "Artist"
+    Artist_id = Column(Integer, primary_key=True, index=True)
+    Artist_name = Column(String, nullable=False)
+    Country = Column(String, nullable=False)
+    audio_file = Column(String, nullable=True)
+
+    
