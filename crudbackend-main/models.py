@@ -1,6 +1,7 @@
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from database import Base
+from typing import Optional
 
 class Album(Base):
     __tablename__ = 'Album'
@@ -24,10 +25,10 @@ class Artist(Base):
     audio_file = Column(String, nullable=True)
 
 class User(Base):
-    __tablename__ = "users"
+    username: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    disabled: Optional[bool] = None
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    username = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)
-    
+class UserDB(User):
+    hashed_password: str

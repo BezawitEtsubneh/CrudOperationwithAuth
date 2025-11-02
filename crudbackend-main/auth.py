@@ -1,36 +1,51 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from jose import JWTError, jwt
-from datetime import datetime
-import schemas, models, utils, database
+from datetime import datetime, timedelta, timezone
+from typing import Annotated, Optional
 
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
+from sqlalchemy import Column, Integer, String, Boolean, create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+# ---------- CONFIG ----------
+SECRET_KEY = "your_very_secure_secret_key_here"  # Replace with: openssl rand -hex 32
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
 
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# ---------- DATABASE ----------
+DATABASE_URL = "sqlite:///./users.db"
+Base = declarative_base()
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-@router.post("/signup", response_model=schemas.ShowUser)
-def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_pw = utils.hash_password(user.password)
-    new_user = models.User(email=user.email, username=user.username, password=hashed_pw)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+# ---------- PASSWORD HASH ----------
+password_hash = PasswordHash.recommended()
 
-@router.post("/signin")
-def signin(user: schemas.UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if not db_user or not utils.verify_password(user.password, db_user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    token = utils.create_access_token({"sub": db_user.email})
-    return {"access_token": token, "token_type": "bearer"}
+# ---------- MODELS ----------
+class UserDB(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    full_name = Column(String)
+    hashed_password = Column(String)
+    disabled = Column(Boolean, default=False)
+
+Base.metadata.create_all(bind=engine)
+
+# ---------- SCHEMAS ----------
+class User(BaseModel):
+    username: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    disabled: Optional[bool] = None
+
+class UserInDB(User):
+    hashed_password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
