@@ -7,6 +7,12 @@ from sqlalchemy.exc import SQLAlchemyError
 import shutil
 import os
 import logging
+from fastapi import FastAPI, Depends, HTTPException, status
+from jose import JWTError, jwt
+import models
+import database
+import auth
+import utils
 
 from models import Album, Song, Artist, Base
 from database import SessionLocal, engine
@@ -63,6 +69,18 @@ def save_file(file: UploadFile) -> str:
     return file_path
 
 # ---------------- ALBUM ENDPOINTS ----------------
+app.include_router(auth.router)
+
+@app.get("/protected")
+def protected_route(token: str):
+    try:
+        payload = jwt.decode(token, utils.SECRET_KEY, algorithms=[utils.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return {"message": f"Hello {email}, you accessed a protected route!"}
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 @app.get("/api/albums/all")
 async def get_all_albums(db: Session = Depends(get_db)):
     albums = db.query(Album).all()
